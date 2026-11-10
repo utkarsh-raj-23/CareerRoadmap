@@ -63,6 +63,29 @@ public class AuthService {
                 user.getEmail()
         );
     }
+    // Register a new admin
+    @Transactional
+    public RegisterResponse registerAdmin(RegisterRequest request) {
+
+        String email = request.getEmail().trim().toLowerCase();
+
+        User user = new User();
+
+        user.setFullName(request.getFullName().trim());
+        user.setEmail(email);
+        user.setPasswordHash(
+                passwordEncoder.encode(request.getPassword())
+        );
+        user.setRole(Role.ADMIN);
+        user.setEnabled(true);
+
+        userRepository.save(user);
+
+        return new RegisterResponse(
+                "Registration successful",
+                user.getEmail()
+        );
+    }
 
     // Login existing user
     public LoginResponse login(LoginRequest request) {

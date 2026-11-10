@@ -41,53 +41,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+        // 1. Try to extract token from Cookie
+        String token = jwtService.getJwtFromCookies(request);
 
-        // Check whether Authorization header contains Bearer token
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+        // 2. Fallback to Authorization Header (Bearer <token>)
+        if (token == null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
         }
 
-        String token = authHeader.substring(7);
+        // Authenticate if token exists
+        if (token != null) {
+            try {
+                if (jwtService.isTokenValid(token)) {
+                    String email = jwtService.extractEmail(token);
 
-        try {
-            // Extract email from verified JWT
-            String email = jwtService.extractEmail(token);
+                    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        User user = userRepository.findByEmail(email).orElse(null);
 
-            // Authenticate only if user is not already authenticated
-            if (email != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                User user = userRepository.findByEmail(email)
-                        .orElse(null);
-
-                if (user != null && user.isEnabled()) {
-
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    user.getEmail(),
-                                    null,
-                                    List.of(
-                                            new SimpleGrantedAuthority(
-                                                    "ROLE_" + user.getRole().name()
+                        if (user != null && user.isEnabled()) {
+                            UsernamePasswordAuthenticationToken authentication =
+                                    new UsernamePasswordAuthenticationToken(
+                                            user.getEmail(),
+                                            null,
+                                            List.of(
+                                                    new SimpleGrantedAuthority(
+                                                            "ROLE_" + user.getRole().name()
+                                                    )
                                             )
-                                    )
+                                    );
+
+                            authentication.setDetails(
+                                    new WebAuthenticationDetailsSource().buildDetails(request)
                             );
 
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
+                    }
                 }
+            } catch (JwtException | IllegalArgumentException exception) {
+                SecurityContextHolder.clearContext();
             }
-
-        } catch (JwtException | IllegalArgumentException exception) {
-            // Invalid or expired token: leave the request unauthenticated
-            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
