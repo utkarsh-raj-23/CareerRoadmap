@@ -1,5 +1,4 @@
-@"
-# Python
+﻿# Python
 venv/
 .venv/
 __pycache__/
@@ -27,4 +26,3 @@ target/
 # OS
 .DS_Store
 Thumbs.db
-"@ | Set-Content .gitignore
