@@ -1,5 +1,6 @@
 package com.utkarsh.careerroadmap.exception;
 
+import com.utkarsh.careerroadmap.dto.APIResponse;
 import com.utkarsh.careerroadmap.dto.ApiErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -134,5 +135,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(status)
                 .body(response);
+    }
+    @ExceptionHandler(APIException.class)
+    public ResponseEntity<APIResponse> myAPIException(APIException e) {
+        String message = e.getMessage();
+        APIResponse apiResponse = new APIResponse(message, false);
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 }
