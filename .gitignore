@@ -1,0 +1,30 @@
+@"
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Java / Maven
+target/
+*.class
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+"@ | Set-Content .gitignore
