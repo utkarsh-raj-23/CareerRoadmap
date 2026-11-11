@@ -15,4 +15,5 @@ public class ResumeResponse {
     private String contentType;
     private Long fileSize;
     private LocalDateTime uploadedAt;
+    private String StoredFileName;
 }

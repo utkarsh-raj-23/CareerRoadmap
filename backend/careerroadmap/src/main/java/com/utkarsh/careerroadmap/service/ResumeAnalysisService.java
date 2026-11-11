@@ -48,15 +48,15 @@ public class ResumeAnalysisService {
 
         try {
             // 2. Read the saved PDF.
-            Path filePath = Path.of(resume.getStoragePath());
+            String filePath = resume.getStoredFileName();
 
-            if (!Files.exists(filePath)) {
+            if (filePath == null ) {
                 throw new ResponseStatusException(
                         NOT_FOUND, "Resume file not found on server"
                 );
             }
 
-            byte[] fileBytes = Files.readAllBytes(filePath);
+            byte[] fileBytes = Files.readAllBytes(Path.of(filePath));
 
             // 3. Prepare the PDF as multipart form data.
             ByteArrayResource fileResource =
