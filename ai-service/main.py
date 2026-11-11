@@ -1,5 +1,8 @@
 
-import fitz
+try:
+    import pymupdf as fitz
+except ImportError:
+    import fitz
 from pydantic import BaseModel
 from skill_extractor import extract_skills
 

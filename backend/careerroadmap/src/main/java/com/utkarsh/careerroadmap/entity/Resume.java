@@ -32,10 +32,8 @@ public class Resume {
     private String originalFileName;
 
     @Column(name = "stored_file_name", nullable = false, unique = true)
-    private String storedFileName;
+    private String StoredFileName;
 
-    @Column(name = "storage_path", nullable = false)
-    private String storagePath;
 
     @Column(name = "content_type", nullable = false)
     private String contentType;
@@ -50,4 +48,6 @@ public class Resume {
     protected void onCreate() {
         uploadedAt = LocalDateTime.now();
     }
+
+
 }

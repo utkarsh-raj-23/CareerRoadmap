@@ -16,7 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/profile")
+@RequestMapping("/api")
 public class StudentProfileController {
 
     private final StudentProfileService profileService;
@@ -28,7 +28,7 @@ public class StudentProfileController {
     }
 
     // Create student profile
-    @PostMapping("/me")
+    @PostMapping("/create/profile")
     public ResponseEntity<StudentProfileResponse> createProfile(
             @Valid @RequestBody StudentProfileRequest request,
             Authentication authentication) {
@@ -44,7 +44,7 @@ public class StudentProfileController {
     }
 
     // Get logged-in student's profile
-    @GetMapping("/me")
+    @GetMapping("/my/profile")
     public ResponseEntity<StudentProfileResponse> getProfile(
             Authentication authentication) {
 
@@ -57,7 +57,7 @@ public class StudentProfileController {
     }
 
     // Update logged-in student's profile
-    @PutMapping("/me")
+    @PutMapping("/update/profile")
     public ResponseEntity<StudentProfileResponse> updateProfile(
             @Valid @RequestBody StudentProfileRequest request,
             Authentication authentication) {

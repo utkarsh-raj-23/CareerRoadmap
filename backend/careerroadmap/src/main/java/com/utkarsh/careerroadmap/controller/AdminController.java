@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/admin")
+
 public class AdminController {
 
     private final AdminService adminService;
@@ -16,11 +16,12 @@ public class AdminController {
         this.adminService = adminService;
     }
 
-    @GetMapping("/dashboard")
+    @GetMapping("api/admin/dashboard")
     public ResponseEntity<AdminDashboardResponse> getDashboard() {
 
         return ResponseEntity.ok(
                 adminService.getDashboard()
         );
     }
+
 }

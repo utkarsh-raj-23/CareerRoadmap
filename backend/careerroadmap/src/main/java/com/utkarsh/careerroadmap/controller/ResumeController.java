@@ -6,8 +6,10 @@ import com.utkarsh.careerroadmap.service.ResumeService;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
@@ -16,10 +18,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/resumes")
+@RequestMapping("/api")
 public class ResumeController {
 
     private final ResumeService resumeService;
@@ -30,12 +35,12 @@ public class ResumeController {
 
     // Upload resume
     @PostMapping(
-            value = "/upload",
+            value = "/resume/upload",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<ResumeResponse> uploadResume(
             @RequestParam("file") @NotNull MultipartFile file,
-            Authentication authentication) {
+            Authentication authentication) throws IOException {
 
         String email = authentication.getName();
 
@@ -46,7 +51,7 @@ public class ResumeController {
     }
 
     // Get all resumes of logged-in user
-    @GetMapping
+    @GetMapping("my/resume")
     public ResponseEntity<List<ResumeResponse>> getMyResumes(
             Authentication authentication) {
 
@@ -58,37 +63,21 @@ public class ResumeController {
     }
 
     // Download resume
-    @GetMapping("/{id}")
+    @GetMapping("/resume/download")
     public ResponseEntity<Resource> downloadResume(
-            @PathVariable Long id,
-            Authentication authentication) {
+            @RequestParam String fileUrl) throws IOException {
 
-        String email = authentication.getName();
+        URL url = new URL(fileUrl);
 
-        Resource resource =
-                resumeService.downloadResume(id, email);
+        InputStreamResource resource =
+                new InputStreamResource(url.openStream());
 
         return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=resume.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"resume.pdf\""
-                )
                 .body(resource);
     }
 
-
-    // Delete resume
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteResume(
-            @PathVariable Long id,
-            Authentication authentication) {
-
-        String email = authentication.getName();
-
-        resumeService.deleteResume(id, email);
-
-        return ResponseEntity.noContent().build();
-    }
 
 }

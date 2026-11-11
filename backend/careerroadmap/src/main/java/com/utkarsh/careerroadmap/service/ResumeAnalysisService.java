@@ -48,9 +48,9 @@ public class ResumeAnalysisService {
 
         try {
             // 2. Read the saved PDF.
-            Path filePath = Path.of(resume.getStoragePath());
+            Path filePath = Path.of(resume.getStoredFileName());
 
-            if (!Files.exists(filePath)) {
+            if (filePath.toFile().exists()) {
                 throw new ResponseStatusException(
                         NOT_FOUND, "Resume file not found on server"
                 );
