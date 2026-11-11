@@ -1,3 +1,4 @@
+
 package com.utkarsh.careerroadmap.service;
 
 import com.utkarsh.careerroadmap.dto.ResumeResponse;
@@ -38,6 +39,7 @@ public class ResumeService {
 
         this.resumeRepository = resumeRepository;
         this.userRepository = userRepository;
+
         this.uploadDirectory = Paths.get(uploadDir)
                 .toAbsolutePath()
                 .normalize();
@@ -45,56 +47,134 @@ public class ResumeService {
 
     // Upload resume
     @Transactional
-    public ResumeResponse uploadResume(String email, MultipartFile file) {
+    public ResumeResponse uploadResume(
+            String email,
+            MultipartFile file) {
+
+        // Check whether file exists
         if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please select a file");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Please select a file"
+            );
         }
+
+        // Check file size
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File size cannot exceed 5 MB");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "File size cannot exceed 5 MB"
+            );
         }
+
+        // Check original filename
         String originalFileName = file.getOriginalFilename();
-        if (originalFileName == null || !originalFileName.toLowerCase().endsWith(".pdf")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only PDF files are allowed");
+
+        if (originalFileName == null ||
+                !originalFileName.toLowerCase().endsWith(".pdf")) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only PDF files are allowed"
+            );
         }
+
+        // Verify PDF file signature
         try {
             byte[] signature = file.getInputStream().readNBytes(5);
-            if (signature.length != 5 || signature[0] != '%' || signature[1] != 'P' || signature[2] != 'D' || signature[3] != 'F' || signature[4] != '-') {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid PDF file");
+
+            if (signature.length != 5 ||
+                    signature[0] != '%' ||
+                    signature[1] != 'P' ||
+                    signature[2] != 'D' ||
+                    signature[3] != 'F' ||
+                    signature[4] != '-') {
+
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid PDF file"
+                );
             }
-        } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to read uploaded file");
+
+        } catch (IOException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to read uploaded file"
+            );
         }
+
+        // Find logged-in user
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        // Generate unique filename
         String storedFileName = UUID.randomUUID() + ".pdf";
-        Path targetPath = uploadDirectory.resolve(storedFileName).normalize();
+
+        Path targetPath = uploadDirectory
+                .resolve(storedFileName)
+                .normalize();
+
+        // Ensure file stays inside upload directory
         if (!targetPath.startsWith(uploadDirectory)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file path");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid file path"
+            );
         }
+
         try {
+            // Create upload directory if it does not exist
             Files.createDirectories(uploadDirectory);
-            try (var is = file.getInputStream()) {
-                Files.copy(is, targetPath);
+
+            // Save PDF file
+            try (var inputStream = file.getInputStream()) {
+
+                Files.copy(
+                        inputStream,
+                        targetPath
+                );
             }
+
+            // Save file information in database
             Resume resume = new Resume();
+
             resume.setUser(user);
-            resume.setOriginalFileName(Paths.get(originalFileName.replace("\\", "/")).getFileName().toString());
+            resume.setOriginalFileName(
+                    Paths.get(originalFileName.replace("\\", "/"))
+                            .getFileName()
+                            .toString()
+            );
             resume.setStoredFileName(storedFileName);
             resume.setStoragePath(targetPath.toString());
             resume.setContentType("application/pdf");
             resume.setFileSize(file.getSize());
-            Resume saved = resumeRepository.save(resume);
-            return convertToResponse(saved);
-        } catch (IOException ex) {
+
+            Resume savedResume = resumeRepository.save(resume);
+
+            return convertToResponse(savedResume);
+
+        } catch (IOException exception) {
+
             deleteStoredFile(targetPath);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to save resume");
-        } catch (RuntimeException ex) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to save resume"
+            );
+        } catch (RuntimeException exception) {
+
             deleteStoredFile(targetPath);
-            throw ex;
+
+            throw exception;
         }
     }
 
+    // Convert entity into response DTO
     private ResumeResponse convertToResponse(Resume resume) {
+
         return new ResumeResponse(
                 resume.getId(),
                 resume.getOriginalFileName(),
@@ -104,50 +184,107 @@ public class ResumeService {
         );
     }
 
+    // Delete physical file if database operation fails
     private void deleteStoredFile(Path path) {
-        try { Files.deleteIfExists(path); } catch (IOException ignored) {}
+
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+            // Cleanup failure should not hide the original error
+        }
     }
 
+    //Get all resumes belonging to the logged-in user
     @Transactional(readOnly = true)
     public java.util.List<ResumeResponse> getMyResumes(String email) {
-        return resumeRepository.findAllByUser_EmailOrderByUploadedAtDesc(email)
+
+        return resumeRepository
+                .findAllByUser_EmailOrderByUploadedAtDesc(email)
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
     }
 
+    //Download a resume
     @Transactional(readOnly = true)
     public Resource downloadResume(Long id, String email) {
-        Resume resume = resumeRepository.findByIdAndUser_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
+
+        Resume resume = resumeRepository
+                .findByIdAndUser_Email(id, email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Resume not found"
+                ));
+
         try {
-            Path filePath = Paths.get(resume.getStoragePath()).toAbsolutePath().normalize();
+            Path filePath = Paths.get(resume.getStoragePath())
+                    .toAbsolutePath()
+                    .normalize();
+
             if (!filePath.startsWith(uploadDirectory)) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume file not found");
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Resume file not found"
+                );
             }
+
             Resource resource = new UrlResource(filePath.toUri());
+
             if (!resource.exists() || !resource.isReadable()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume file not found");
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Resume file not found"
+                );
             }
+
             return resource;
-        } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to download resume");
+
+        } catch (IOException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to download resume"
+            );
         }
     }
 
+    //Delete Resume API
     @Transactional
     public void deleteResume(Long id, String email) {
-        Resume resume = resumeRepository.findByIdAndUser_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
+
+        // Find resume belonging to the logged-in user
+        Resume resume = resumeRepository
+                .findByIdAndUser_Email(id, email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Resume not found"
+                ));
+
         try {
-            Path filePath = Paths.get(resume.getStoragePath()).toAbsolutePath().normalize();
+            Path filePath = Paths.get(resume.getStoragePath())
+                    .toAbsolutePath()
+                    .normalize();
+
+            // Ensure the file belongs to our upload directory
             if (!filePath.startsWith(uploadDirectory)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file path");
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid file path"
+                );
             }
+
+            // Delete physical PDF file
             Files.deleteIfExists(filePath);
+
+            // Delete database record
             resumeRepository.delete(resume);
-        } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete resume file");
+
+        } catch (IOException exception) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Unable to delete resume file"
+            );
         }
     }
+
 }
