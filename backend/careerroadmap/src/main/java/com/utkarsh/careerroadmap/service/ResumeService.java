@@ -1,12 +1,13 @@
-
 package com.utkarsh.careerroadmap.service;
 
 import com.utkarsh.careerroadmap.dto.ResumeResponse;
 import com.utkarsh.careerroadmap.entity.Resume;
 import com.utkarsh.careerroadmap.entity.User;
+import com.utkarsh.careerroadmap.exception.APIException;
 import com.utkarsh.careerroadmap.repository.ResumeRepository;
 import com.utkarsh.careerroadmap.repository.UserRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,31 +26,28 @@ import org.springframework.core.io.UrlResource;
 
 @Service
 public class ResumeService {
-
+    @Autowired
+    FileService fileService;
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     private final ResumeRepository resumeRepository;
-    private final UserRepository userRepository;
-    private final Path uploadDirectory;
+    private final UserRepository userRepository ;
 
     public ResumeService(
             ResumeRepository resumeRepository,
-            UserRepository userRepository,
-            @Value("${app.upload.dir}") String uploadDir) {
+            UserRepository userRepository
+       ) {
 
         this.resumeRepository = resumeRepository;
         this.userRepository = userRepository;
 
-        this.uploadDirectory = Paths.get(uploadDir)
-                .toAbsolutePath()
-                .normalize();
     }
 
     // Upload resume
     @Transactional
     public ResumeResponse uploadResume(
             String email,
-            MultipartFile file) {
+            MultipartFile file) throws IOException {
 
         // Check whether file exists
         if (file == null || file.isEmpty()) {
@@ -82,7 +80,6 @@ public class ResumeService {
         // Verify PDF file signature
         try {
             byte[] signature = file.getInputStream().readNBytes(5);
-
             if (signature.length != 5 ||
                     signature[0] != '%' ||
                     signature[1] != 'P' ||
@@ -110,88 +107,34 @@ public class ResumeService {
                         "User not found"
                 ));
 
-        // Generate unique filename
-        String storedFileName = UUID.randomUUID() + ".pdf";
+        String fileName = fileService.uploadfile(file);
+        Resume resume = new Resume();
 
-        Path targetPath = uploadDirectory
-                .resolve(storedFileName)
-                .normalize();
+        resume.setUser(user);
+        resume.setOriginalFileName(
+                Paths.get(originalFileName.replace("\\", "/"))
+                        .getFileName()
+                        .toString()
+        );
+        resume.setStoredFileName(fileName);
+        resume.setContentType("application/pdf");
+        resume.setFileSize(file.getSize());
 
-        // Ensure file stays inside upload directory
-        if (!targetPath.startsWith(uploadDirectory)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid file path"
-            );
-        }
+        Resume savedResume = resumeRepository.save(resume);
 
-        try {
-            // Create upload directory if it does not exist
-            Files.createDirectories(uploadDirectory);
-
-            // Save PDF file
-            try (var inputStream = file.getInputStream()) {
-
-                Files.copy(
-                        inputStream,
-                        targetPath
-                );
-            }
-
-            // Save file information in database
-            Resume resume = new Resume();
-
-            resume.setUser(user);
-            resume.setOriginalFileName(
-                    Paths.get(originalFileName.replace("\\", "/"))
-                            .getFileName()
-                            .toString()
-            );
-            resume.setStoredFileName(storedFileName);
-            resume.setStoragePath(targetPath.toString());
-            resume.setContentType("application/pdf");
-            resume.setFileSize(file.getSize());
-
-            Resume savedResume = resumeRepository.save(resume);
-
-            return convertToResponse(savedResume);
-
-        } catch (IOException exception) {
-
-            deleteStoredFile(targetPath);
-
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Unable to save resume"
-            );
-        } catch (RuntimeException exception) {
-
-            deleteStoredFile(targetPath);
-
-            throw exception;
-        }
+        return convertToResponse(savedResume);
     }
 
     // Convert entity into response DTO
     private ResumeResponse convertToResponse(Resume resume) {
-
         return new ResumeResponse(
                 resume.getId(),
                 resume.getOriginalFileName(),
                 resume.getContentType(),
                 resume.getFileSize(),
-                resume.getUploadedAt()
+                resume.getUploadedAt(),
+                resume.getStoredFileName()
         );
-    }
-
-    // Delete physical file if database operation fails
-    private void deleteStoredFile(Path path) {
-
-        try {
-            Files.deleteIfExists(path);
-        } catch (IOException ignored) {
-            // Cleanup failure should not hide the original error
-        }
     }
 
     //Get all resumes belonging to the logged-in user
@@ -203,88 +146,6 @@ public class ResumeService {
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
-    }
-
-    //Download a resume
-    @Transactional(readOnly = true)
-    public Resource downloadResume(Long id, String email) {
-
-        Resume resume = resumeRepository
-                .findByIdAndUser_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Resume not found"
-                ));
-
-        try {
-            Path filePath = Paths.get(resume.getStoragePath())
-                    .toAbsolutePath()
-                    .normalize();
-
-            if (!filePath.startsWith(uploadDirectory)) {
-                throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Resume file not found"
-                );
-            }
-
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (!resource.exists() || !resource.isReadable()) {
-                throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Resume file not found"
-                );
-            }
-
-            return resource;
-
-        } catch (IOException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Unable to download resume"
-            );
-        }
-    }
-
-    //Delete Resume API
-    @Transactional
-    public void deleteResume(Long id, String email) {
-
-        // Find resume belonging to the logged-in user
-        Resume resume = resumeRepository
-                .findByIdAndUser_Email(id, email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Resume not found"
-                ));
-
-        try {
-            Path filePath = Paths.get(resume.getStoragePath())
-                    .toAbsolutePath()
-                    .normalize();
-
-            // Ensure the file belongs to our upload directory
-            if (!filePath.startsWith(uploadDirectory)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Invalid file path"
-                );
-            }
-
-            // Delete physical PDF file
-            Files.deleteIfExists(filePath);
-
-            // Delete database record
-            resumeRepository.delete(resume);
-
-        } catch (IOException exception) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Unable to delete resume file"
-            );
-        }
     }
 
 }
