@@ -6,7 +6,7 @@ import com.utkarsh.careerroadmap.entity.User;
 import com.utkarsh.careerroadmap.exception.APIException;
 import com.utkarsh.careerroadmap.repository.ResumeRepository;
 import com.utkarsh.careerroadmap.repository.UserRepository;
-
+import java.io.InputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -146,6 +146,83 @@ public class ResumeService {
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
+    }
+
+    @Transactional
+    public ResumeResponse updateLatestResume(
+            String email,
+            MultipartFile file
+    ) throws IOException {
+
+        // Validate uploaded file
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Please select a PDF file"
+            );
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "File size cannot exceed 5 MB"
+            );
+        }
+
+        String originalFileName = file.getOriginalFilename();
+
+        if (originalFileName == null ||
+                !originalFileName.toLowerCase().endsWith(".pdf")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only PDF files are allowed"
+            );
+        }
+
+        // Verify PDF signature
+        try (InputStream input = file.getInputStream()) {
+            byte[] signature = input.readNBytes(5);
+
+            if (signature.length != 5 ||
+                    signature[0] != '%' ||
+                    signature[1] != 'P' ||
+                    signature[2] != 'D' ||
+                    signature[3] != 'F' ||
+                    signature[4] != '-') {
+
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid PDF file"
+                );
+            }
+        }
+
+        // Fetch latest resume belonging to logged-in user
+        Resume existingResume = resumeRepository
+                .findFirstByUser_EmailOrderByUploadedAtDesc(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No existing resume found. Please upload a resume first."
+                ));
+
+        // Upload new PDF to Cloudinary
+        String newFileUrl = fileService.uploadfile(file);
+
+        // Update existing database record
+        existingResume.setStoredFileName(newFileUrl);
+
+        existingResume.setOriginalFileName(
+                Paths.get(originalFileName.replace("\\", "/"))
+                        .getFileName()
+                        .toString()
+        );
+
+        existingResume.setContentType("application/pdf");
+        existingResume.setFileSize(file.getSize());
+
+        Resume updatedResume = resumeRepository.save(existingResume);
+
+        return convertToResponse(updatedResume);
     }
 
 }

@@ -19,6 +19,9 @@ public interface ResumeRepository
             Long id,
             String email
     );
+    Optional<Resume> findFirstByUser_EmailOrderByUploadedAtDesc(
+            String email
+    );
 
     boolean existsByStoredFileName(String storedFileName);
 }

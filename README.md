@@ -288,7 +288,67 @@ Sends the uploaded resume to the Python AI service for text extraction and skill
 
 ---
 
+<<<<<<< HEAD
 ### 6. 💼 Career Management
+=======
+### 🔄 6. Update Latest Resume
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `PUT` | `/api/resumes/latest` | 🔒 | Update the latest uploaded resume of the logged-in user |
+
+#### `PUT /api/resumes/latest/update`
+
+Replaces the latest uploaded resume of the authenticated user with a new PDF file.
+
+**Request:**
+
+```http
+PUT /api/resumes/latest
+Content-Type: multipart/form-data
+```
+
+**Request Body (form-data):**
+
+| Key | Type | Value |
+|-----|------|-------|
+| `file` | File | `new_resume.pdf` |
+
+**Response — 200 OK**
+
+```json
+{
+  "id": 1,
+  "originalFileName": "new_resume.pdf",
+  "contentType": "application/pdf",
+  "fileSize": 125000,
+  "storedFileName": "https://res.cloudinary.com/..."
+}
+```
+
+**Functionality:**
+- Fetches the latest resume uploaded by the logged-in user.
+- Uploads the new PDF to Cloudinary.
+- Updates the existing resume record with the new Cloudinary URL.
+- Updates the original filename, content type and file size.
+- Does not create a duplicate resume database record.
+
+**Validation:**
+- Only PDF files are accepted.
+- Maximum file size: 5 MB.
+- PDF signature (`%PDF-`) is verified.
+- User authentication is required.
+
+**Possible Error Responses:**
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | Invalid file or file exceeds 5 MB |
+| `401 Unauthorized` | User is not authenticated |
+| `404 Not Found` | No existing resume found for the user |
+
+### 7. 💼 Career Management
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/careers`
 
@@ -337,7 +397,11 @@ Sends the uploaded resume to the Python AI service for text extraction and skill
 
 ---
 
+<<<<<<< HEAD
 ### 7. 🎯 Career Recommendations
+=======
+### 8. 🎯 Career Recommendations
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/recommendations`
 
@@ -378,7 +442,11 @@ Returns a ranked list of career paths matching the student's current skills.
 
 ---
 
+<<<<<<< HEAD
 ### 8. 🗺️ Roadmaps
+=======
+### 9. 🗺️ Roadmaps
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/roadmaps`
 
@@ -433,7 +501,11 @@ Returns a ranked list of career paths matching the student's current skills.
 
 ---
 
+<<<<<<< HEAD
 ### 9. 📝 Assessments
+=======
+### 10. 📝 Assessments
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/assessments`
 
@@ -511,7 +583,11 @@ Returns a ranked list of career paths matching the student's current skills.
 
 ---
 
+<<<<<<< HEAD
 ### 10. 📚 Learning Resources
+=======
+### 11. 📚 Learning Resources
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/resources`
 
@@ -550,7 +626,11 @@ Returns only free resources when `freeOnly=true`.
 
 ---
 
+<<<<<<< HEAD
 ### 11. 📊 Progress Tracking
+=======
+### 12. 📊 Progress Tracking
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/progress`
 
@@ -574,7 +654,11 @@ Returns only free resources when `freeOnly=true`.
 
 ---
 
+<<<<<<< HEAD
 ### 12. 🛡️ Admin Dashboard
+=======
+### 13. 🛡️ Admin Dashboard
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base Path:** `/api/admin`
 
@@ -597,7 +681,11 @@ Returns only free resources when `freeOnly=true`.
 
 ---
 
+<<<<<<< HEAD
 ### 13. 🐍 AI Service (Python FastAPI)
+=======
+### 14. 🐍 AI Service (Python FastAPI)
+>>>>>>> 68bc9fe (Add latest resume update feature)
 
 **Base URL:** `http://localhost:8000`
 
