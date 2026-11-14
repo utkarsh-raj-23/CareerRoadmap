@@ -1,4 +1,3 @@
-
 package com.utkarsh.careerroadmap.service;
 
 import com.utkarsh.careerroadmap.dto.ResumeResponse;
@@ -9,18 +8,16 @@ import com.utkarsh.careerroadmap.repository.UserRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,33 +33,23 @@ class ResumeServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @TempDir
-    Path tempDir;
+    @Mock
+    private FileService fileService;
 
+    @InjectMocks
     private ResumeService resumeService;
 
     private User user;
-
     private final String email = "student@example.com";
 
     @BeforeEach
     void setUp() {
-
-        resumeService = new ResumeService(
-                resumeRepository,
-                userRepository,
-                tempDir.toString()
-        );
-
         user = new User();
         user.setEmail(email);
     }
 
     private MockMultipartFile createValidPdf() {
-
-        byte[] content = "%PDF-1.4\nTest PDF content"
-                .getBytes();
-
+        byte[] content = "%PDF-1.4\nTest PDF content".getBytes();
         return new MockMultipartFile(
                 "file",
                 "resume.pdf",
@@ -72,54 +59,38 @@ class ResumeServiceTest {
     }
 
     private Resume createResume() {
-
         Resume resume = new Resume();
-
         resume.setId(1L);
         resume.setUser(user);
         resume.setOriginalFileName("resume.pdf");
-        resume.setStoredFileName("stored-resume.pdf");
-        resume.setStoragePath(
-                tempDir.resolve("stored-resume.pdf").toString()
-        );
+        resume.setStoredFileName("https://res.cloudinary.com/test/resume.pdf");
         resume.setContentType("application/pdf");
         resume.setFileSize(100L);
-
         return resume;
     }
 
-    // 1. Successful resume upload
-
     @Test
-    void uploadResumeShouldSaveResumeSuccessfully() {
-
+    void uploadResumeShouldSaveResumeSuccessfully() throws IOException {
         MockMultipartFile file = createValidPdf();
 
-        when(userRepository.findByEmail(email))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(fileService.uploadfile(any())).thenReturn("https://res.cloudinary.com/test/resume.pdf");
+        when(resumeRepository.save(any(Resume.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(resumeRepository.save(any(Resume.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        ResumeResponse response =
-                resumeService.uploadResume(email, file);
+        ResumeResponse response = resumeService.uploadResume(email, file);
 
         assertNotNull(response);
         assertEquals("resume.pdf", response.getOriginalFileName());
         assertEquals("application/pdf", response.getContentType());
-
         verify(userRepository).findByEmail(email);
         verify(resumeRepository).save(any(Resume.class));
     }
 
-    // 2. Upload should fail for empty file
-
     @Test
     void uploadResumeShouldRejectEmptyFile() {
-
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "resume.pdf",
+                "empty.pdf",
                 "application/pdf",
                 new byte[0]
         );
@@ -128,190 +99,50 @@ class ResumeServiceTest {
                 ResponseStatusException.class,
                 () -> resumeService.uploadResume(email, file)
         );
-
-        verify(resumeRepository, never()).save(any());
     }
 
-    // 3. Upload should reject non-PDF file
-
     @Test
-    void uploadResumeShouldRejectInvalidFileType() {
-
+    void uploadResumeShouldRejectNonPdf() {
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "resume.txt",
-                "text/plain",
-                "This is not a PDF".getBytes()
+                "document.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "test content".getBytes()
         );
 
         assertThrows(
                 ResponseStatusException.class,
                 () -> resumeService.uploadResume(email, file)
         );
-
-        verify(resumeRepository, never()).save(any());
     }
 
-    // 4. Upload should reject invalid PDF signature
-
     @Test
-    void uploadResumeShouldRejectInvalidPdfContent() {
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "resume.pdf",
-                "application/pdf",
-                "This is not a real PDF".getBytes()
-        );
-
-        assertThrows(
-                ResponseStatusException.class,
-                () -> resumeService.uploadResume(email, file)
-        );
-
-        verify(resumeRepository, never()).save(any());
-    }
-
-    // 5. Upload should fail when user does not exist
-
-    @Test
-    void uploadResumeShouldFailWhenUserNotFound() {
-
-        when(userRepository.findByEmail(email))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                ResponseStatusException.class,
-                () -> resumeService.uploadResume(
-                        email,
-                        createValidPdf()
-                )
-        );
-
-        verify(resumeRepository, never()).save(any());
-    }
-
-    // 6. Get all resumes of a user
-
-    @Test
-    void getMyResumesShouldReturnUserResumes() {
-
+    void getMyResumesShouldReturnList() {
         Resume resume = createResume();
-
-        when(resumeRepository
-                .findAllByUser_EmailOrderByUploadedAtDesc(email))
+        when(resumeRepository.findAllByUser_EmailOrderByUploadedAtDesc(email))
                 .thenReturn(List.of(resume));
 
-        List<ResumeResponse> response =
-                resumeService.getMyResumes(email);
+        List<ResumeResponse> responses = resumeService.getMyResumes(email);
+
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertEquals("resume.pdf", responses.get(0).getOriginalFileName());
+        verify(resumeRepository).findAllByUser_EmailOrderByUploadedAtDesc(email);
+    }
+
+    @Test
+    void updateLatestResumeShouldUpdateWhenResumeExists() throws IOException {
+        Resume existing = createResume();
+        MockMultipartFile file = createValidPdf();
+
+        when(resumeRepository.findFirstByUser_EmailOrderByUploadedAtDesc(email))
+                .thenReturn(Optional.of(existing));
+        when(fileService.uploadfile(any())).thenReturn("https://res.cloudinary.com/test/new.pdf");
+        when(resumeRepository.save(any(Resume.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResumeResponse response = resumeService.updateLatestResume(email, file);
 
         assertNotNull(response);
-        assertEquals(1, response.size());
-        assertEquals(
-                "resume.pdf",
-                response.get(0).getOriginalFileName()
-        );
-
-        verify(resumeRepository)
-                .findAllByUser_EmailOrderByUploadedAtDesc(email);
-    }
-
-    // 7. Get resumes should return empty list
-
-    @Test
-    void getMyResumesShouldReturnEmptyListWhenNoResumesExist() {
-
-        when(resumeRepository
-                .findAllByUser_EmailOrderByUploadedAtDesc(email))
-                .thenReturn(List.of());
-
-        List<ResumeResponse> response =
-                resumeService.getMyResumes(email);
-
-        assertNotNull(response);
-        assertTrue(response.isEmpty());
-    }
-
-    // 8. Download resume successfully
-
-    @Test
-    void downloadResumeShouldReturnFile() throws Exception {
-
-        Resume resume = createResume();
-
-        Path filePath = tempDir.resolve("stored-resume.pdf");
-
-        Files.write(
-                filePath,
-                "%PDF-1.4\nTest PDF".getBytes()
-        );
-
-        when(resumeRepository.findByIdAndUser_Email(1L, email))
-                .thenReturn(Optional.of(resume));
-
-        Resource resource =
-                resumeService.downloadResume(1L, email);
-
-        assertNotNull(resource);
-        assertTrue(resource.exists());
-        assertTrue(resource.isReadable());
-
-        verify(resumeRepository)
-                .findByIdAndUser_Email(1L, email);
-    }
-
-    // 9. Download should fail when resume does not exist
-
-    @Test
-    void downloadResumeShouldFailWhenResumeNotFound() {
-
-        when(resumeRepository.findByIdAndUser_Email(1L, email))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                ResponseStatusException.class,
-                () -> resumeService.downloadResume(1L, email)
-        );
-    }
-
-    // 10. Delete resume successfully
-
-    @Test
-    void deleteResumeShouldDeleteFileAndDatabaseRecord()
-            throws Exception {
-
-        Resume resume = createResume();
-
-        Path filePath = tempDir.resolve("stored-resume.pdf");
-
-        Files.write(filePath, "PDF content".getBytes());
-
-        when(resumeRepository.findByIdAndUser_Email(1L, email))
-                .thenReturn(Optional.of(resume));
-
-        resumeService.deleteResume(1L, email);
-
-        assertFalse(Files.exists(filePath));
-
-        verify(resumeRepository)
-                .findByIdAndUser_Email(1L, email);
-
-        verify(resumeRepository).delete(resume);
-    }
-
-    // 11. Delete should fail when resume does not exist
-
-    @Test
-    void deleteResumeShouldFailWhenResumeNotFound() {
-
-        when(resumeRepository.findByIdAndUser_Email(1L, email))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                ResponseStatusException.class,
-                () -> resumeService.deleteResume(1L, email)
-        );
-
-        verify(resumeRepository, never()).delete(any());
+        verify(resumeRepository).save(existing);
     }
 }

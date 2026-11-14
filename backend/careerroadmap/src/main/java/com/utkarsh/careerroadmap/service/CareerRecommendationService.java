@@ -2,6 +2,8 @@ package com.utkarsh.careerroadmap.service;
 
 import com.utkarsh.careerroadmap.dto.CareerRecommendationResponse;
 import com.utkarsh.careerroadmap.dto.CareerSkillGapResponse;
+import com.utkarsh.careerroadmap.dto.SemanticSkillAnalysisRequest;
+import com.utkarsh.careerroadmap.dto.SemanticSkillAnalysisResponse;
 
 import com.utkarsh.careerroadmap.entity.Career;
 import com.utkarsh.careerroadmap.entity.CareerSkill;
@@ -13,8 +15,10 @@ import com.utkarsh.careerroadmap.repository.CareerRepository;
 import com.utkarsh.careerroadmap.repository.CareerSkillRepository;
 import com.utkarsh.careerroadmap.repository.StudentSkillRepository;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -24,15 +28,18 @@ public class CareerRecommendationService {
     private final CareerRepository careerRepository;
     private final CareerSkillRepository careerSkillRepository;
     private final StudentSkillRepository studentSkillRepository;
+    private final ResumeAnalysisService resumeAnalysisService;
 
     public CareerRecommendationService(
             CareerRepository careerRepository,
             CareerSkillRepository careerSkillRepository,
-            StudentSkillRepository studentSkillRepository) {
+            StudentSkillRepository studentSkillRepository,
+            ResumeAnalysisService resumeAnalysisService) {
 
         this.careerRepository = careerRepository;
         this.careerSkillRepository = careerSkillRepository;
         this.studentSkillRepository = studentSkillRepository;
+        this.resumeAnalysisService = resumeAnalysisService;
     }
 
     @Transactional(readOnly = true)
@@ -182,5 +189,37 @@ public class CareerRecommendationService {
                                 "Career not found or no required skills defined"
                         )
                 );
+    }
+
+    /**
+     * FEATURE 3: Deep Semantic Skill Analysis & Gap Breakdown for a selected career.
+     */
+    @Transactional(readOnly = true)
+    public SemanticSkillAnalysisResponse getSemanticSkillAnalysis(
+            Long careerId,
+            String email) {
+
+        Career career = careerRepository.findById(careerId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Career not found"
+                        )
+                );
+
+        List<StudentSkill> studentSkills =
+                studentSkillRepository.findAllByUser_Email(email);
+
+        List<String> skillNames = studentSkills.stream()
+                .map(ss -> ss.getSkill().getName())
+                .toList();
+
+        SemanticSkillAnalysisRequest request = new SemanticSkillAnalysisRequest(
+                null,
+                skillNames,
+                career.getName()
+        );
+
+        return resumeAnalysisService.analyzeSkills(request);
     }
 }

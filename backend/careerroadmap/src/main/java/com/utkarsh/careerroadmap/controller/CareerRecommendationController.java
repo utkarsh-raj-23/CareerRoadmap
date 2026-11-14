@@ -1,6 +1,7 @@
 package com.utkarsh.careerroadmap.controller;
 
 import com.utkarsh.careerroadmap.dto.CareerRecommendationResponse;
+import com.utkarsh.careerroadmap.dto.SemanticSkillAnalysisResponse;
 import com.utkarsh.careerroadmap.service.CareerRecommendationService;
 
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,22 @@ public class CareerRecommendationController {
 
         return ResponseEntity.ok(
                 recommendationService.getSkillGap(
+                        careerId,
+                        authentication.getName()
+                )
+        );
+    }
+
+    /**
+     * FEATURE 3: Deep Semantic Skill Analysis & Gap Breakdown for a specific career path.
+     */
+    @GetMapping("/careers/{careerId}/semantic-analysis")
+    public ResponseEntity<SemanticSkillAnalysisResponse> getSemanticSkillAnalysis(
+            @PathVariable Long careerId,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                recommendationService.getSemanticSkillAnalysis(
                         careerId,
                         authentication.getName()
                 )

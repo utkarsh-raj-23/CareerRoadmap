@@ -1,5 +1,6 @@
 package com.utkarsh.careerroadmap.service;
 
+import com.cloudinary.api.exceptions.ApiException;
 import com.utkarsh.careerroadmap.dto.AddSkillRequest;
 import com.utkarsh.careerroadmap.dto.UpdateSkillRequest;
 import com.utkarsh.careerroadmap.dto.StudentSkillResponse;
@@ -43,7 +44,7 @@ public class StudentSkillService {
     @Transactional
     public int saveExtractedSkills(
             String email,
-            SkillsAnalysisResponse skillsAnalysis) {
+            SkillsAnalysisResponse skillsAnalysis)  {
 
         User user = getUser(email);
 
@@ -80,6 +81,7 @@ public class StudentSkillService {
                         studentSkillRepository
                                 .existsByUser_EmailAndSkill_NameIgnoreCase(
                                         email, cleanSkillName);
+
 
                 if (!alreadyExists) {
                     StudentSkill studentSkill = new StudentSkill();
@@ -119,7 +121,7 @@ public class StudentSkillService {
 
         User user = getUser(email);
 
-        String skillName = request.getName().trim();
+        String skillName = request.getSkillName().trim();
 
         Skill skill = skillRepository
                 .findByNameIgnoreCase(skillName)

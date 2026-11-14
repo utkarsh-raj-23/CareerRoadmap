@@ -12,4 +12,9 @@ public interface LearningResourceRepository
     List<LearningResource> findAllBySkill_Id(Long skillId);
 
     List<LearningResource> findAllBySkill_IdAndFreeTrue(Long skillId);
+
+    // Search by title (case-insensitive partial match)
+    List<LearningResource> findByTitleContainingIgnoreCase(String title);
+
+    List<LearningResource> findByTitleContainingIgnoreCaseAndFreeTrue(String title);
 }

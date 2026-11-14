@@ -30,6 +30,8 @@ public class RoadmapService {
     private final UserRepository userRepository;
 
     private final CareerRecommendationService recommendationService;
+    private final StudentSkillRepository studentSkillRepository;
+    private final ResumeAnalysisService resumeAnalysisService;
 
     public RoadmapService(
             RoadmapRepository roadmapRepository,
@@ -37,7 +39,9 @@ public class RoadmapService {
             CareerRepository careerRepository,
             SkillRepository skillRepository,
             UserRepository userRepository,
-            CareerRecommendationService recommendationService) {
+            CareerRecommendationService recommendationService,
+            StudentSkillRepository studentSkillRepository,
+            ResumeAnalysisService resumeAnalysisService) {
 
         this.roadmapRepository = roadmapRepository;
         this.roadmapItemRepository = roadmapItemRepository;
@@ -45,6 +49,8 @@ public class RoadmapService {
         this.skillRepository = skillRepository;
         this.userRepository = userRepository;
         this.recommendationService = recommendationService;
+        this.studentSkillRepository = studentSkillRepository;
+        this.resumeAnalysisService = resumeAnalysisService;
     }
 
     // Generate a roadmap for a selected career.
@@ -259,5 +265,51 @@ public class RoadmapService {
                 item.getStatus(),
                 item.getCompletedAt()
         );
+    }
+
+    /**
+     * FEATURE 2: Dynamic Roadmap Recommendation for a career using student's actual profile skills.
+     */
+    @Transactional(readOnly = true)
+    public RoadmapRecommendationResponse getAiRoadmapRecommendation(
+            String email,
+            Long careerId,
+            String experienceLevel,
+            Integer durationWeeks) {
+
+        Career career = careerRepository.findById(careerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Career not found"));
+
+        List<StudentSkill> studentSkills = studentSkillRepository.findAllByUser_Email(email);
+        List<String> currentSkillNames = studentSkills.stream()
+                .map(ss -> ss.getSkill().getName())
+                .toList();
+
+        RoadmapRecommendationRequest request = new RoadmapRecommendationRequest(
+                career.getName(),
+                currentSkillNames,
+                (experienceLevel != null && !experienceLevel.isBlank()) ? experienceLevel : "Beginner",
+                (durationWeeks != null && durationWeeks > 0) ? durationWeeks : 12
+        );
+
+        return resumeAnalysisService.recommendRoadmap(request);
+    }
+
+    /**
+     * FEATURE 2: Dynamic Roadmap Recommendation with custom request parameters.
+     */
+    @Transactional(readOnly = true)
+    public RoadmapRecommendationResponse getAiRoadmapRecommendationDirect(
+            String email,
+            RoadmapRecommendationRequest request) {
+
+        if (request.getCurrent_skills() == null || request.getCurrent_skills().isEmpty()) {
+            List<StudentSkill> studentSkills = studentSkillRepository.findAllByUser_Email(email);
+            request.setCurrent_skills(studentSkills.stream()
+                    .map(ss -> ss.getSkill().getName())
+                    .toList());
+        }
+
+        return resumeAnalysisService.recommendRoadmap(request);
     }
 }

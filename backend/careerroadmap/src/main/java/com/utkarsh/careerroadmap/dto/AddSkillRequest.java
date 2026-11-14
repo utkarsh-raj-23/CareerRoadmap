@@ -16,7 +16,7 @@ public class AddSkillRequest {
 
     @NotBlank(message = "Skill name is required")
     @Size(max = 100, message = "Skill name cannot exceed 100 characters")
-    private String name;
+    private String skillName;
 
     @Size(max = 100, message = "Category cannot exceed 100 characters")
     private String category;

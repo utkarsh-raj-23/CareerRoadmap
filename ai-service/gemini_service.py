@@ -21,9 +21,9 @@ except ImportError:
     logger.warning("google-genai package not installed or failed to import.")
 
 # Gemini configuration
-DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+DEFAULT_MODEL = os.getenv("GEMINI_CHAT_MODEL") or os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-API_TIMEOUT_SECONDS = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "8"))
+API_TIMEOUT_SECONDS = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "15"))
 
 
 def get_gemini_client():
@@ -34,7 +34,7 @@ def get_gemini_client():
     if not api_key:
         return None
     try:
-        http_options = types.HttpOptions(timeout=7000) if hasattr(types, "HttpOptions") else None
+        http_options = types.HttpOptions(timeout=15000) if hasattr(types, "HttpOptions") else None
         return genai.Client(api_key=api_key, http_options=http_options)
     except Exception as e:
         logger.error(f"Failed to initialize Gemini Client: {e}")

@@ -76,13 +76,13 @@ public class LearningResourceService {
 
     @Transactional(readOnly = true)
     public List<LearningResourceResponse> getResourcesBySkill(
-            Long skillId,
+            String title,
             boolean freeOnly) {
 
-        if (!skillRepository.existsById(skillId)) {
+        if ( resourceRepository.findByTitleContainingIgnoreCase(title)==null) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Skill not found"
+                    "Resource not found"
             );
         }
 
@@ -90,10 +90,35 @@ public class LearningResourceService {
 
         if (freeOnly) {
             resources = resourceRepository
-                    .findAllBySkill_IdAndFreeTrue(skillId);
+                    .findByTitleContainingIgnoreCaseAndFreeTrue( title);
         } else {
             resources = resourceRepository
-                    .findAllBySkill_Id(skillId);
+                    .findByTitleContainingIgnoreCaseAndFreeTrue( title);
+        }
+
+        List<LearningResourceResponse> responses =
+                new ArrayList<>();
+
+        for (LearningResource resource : resources) {
+            responses.add(convertToResponse(resource));
+        }
+
+        return responses;
+    }
+
+    @Transactional(readOnly = true)
+    public List<LearningResourceResponse> searchByTitle(
+            String title,
+            boolean freeOnly) {
+
+        List<LearningResource> resources;
+
+        if (freeOnly) {
+            resources = resourceRepository
+                    .findByTitleContainingIgnoreCaseAndFreeTrue(title);
+        } else {
+            resources = resourceRepository
+                    .findByTitleContainingIgnoreCase(title);
         }
 
         List<LearningResourceResponse> responses =

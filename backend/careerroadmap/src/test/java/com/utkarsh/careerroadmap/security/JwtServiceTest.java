@@ -27,7 +27,7 @@ class JwtServiceTest {
 
         secret = Base64.getEncoder().encodeToString(keyBytes);
 
-        jwtService = new JwtService(secret, 86400000);
+        jwtService = new JwtService(secret, 86400000L, "career_jwt", false, "Lax");
     }
 
     @Test

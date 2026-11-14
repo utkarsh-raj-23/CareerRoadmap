@@ -58,7 +58,6 @@
     <artifactId>postgresql</artifactId>
     <scope>runtime</scope>
 </dependency>
-		
 <dependency>
     <groupId>com.cloudinary</groupId>
     <artifactId>cloudinary-http5</artifactId>

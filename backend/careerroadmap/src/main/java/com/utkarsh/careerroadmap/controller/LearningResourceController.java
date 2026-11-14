@@ -43,16 +43,26 @@ public class LearningResourceController {
         );
     }
 
-    @GetMapping("/skill/{skillId}")
+    @GetMapping("/title/{title}")
     public ResponseEntity<List<LearningResourceResponse>> getResourcesBySkill(
-            @PathVariable Long skillId,
+            @PathVariable String title,
             @RequestParam(defaultValue = "false") boolean freeOnly) {
 
         return ResponseEntity.ok(
                 resourceService.getResourcesBySkill(
-                        skillId,
+                        title,
                         freeOnly
                 )
+        );
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<LearningResourceResponse>> searchByTitle(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "false") boolean freeOnly) {
+
+        return ResponseEntity.ok(
+                resourceService.searchByTitle(title, freeOnly)
         );
     }
 }

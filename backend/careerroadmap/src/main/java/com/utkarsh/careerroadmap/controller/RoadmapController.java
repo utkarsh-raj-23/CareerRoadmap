@@ -81,4 +81,42 @@ public class RoadmapController {
                 )
         );
     }
+
+    /**
+     * FEATURE 2: Generate dynamic AI roadmap recommendation for a specific career ID.
+     */
+    @PostMapping("/ai-recommend")
+    public ResponseEntity<RoadmapRecommendationResponse> recommendAiRoadmap(
+            @RequestParam Long careerId,
+            @RequestParam(required = false, defaultValue = "Beginner") String experienceLevel,
+            @RequestParam(required = false, defaultValue = "12") Integer durationWeeks,
+            Authentication authentication) {
+
+        RoadmapRecommendationResponse response =
+                roadmapService.getAiRoadmapRecommendation(
+                        authentication.getName(),
+                        careerId,
+                        experienceLevel,
+                        durationWeeks
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * FEATURE 2: Generate dynamic AI roadmap with custom request body.
+     */
+    @PostMapping("/ai-generate")
+    public ResponseEntity<RoadmapRecommendationResponse> generateAiRoadmap(
+            @RequestBody RoadmapRecommendationRequest request,
+            Authentication authentication) {
+
+        RoadmapRecommendationResponse response =
+                roadmapService.getAiRoadmapRecommendationDirect(
+                        authentication.getName(),
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+    }
 }

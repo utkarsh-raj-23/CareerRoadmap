@@ -26,21 +26,20 @@ import org.springframework.core.io.UrlResource;
 
 @Service
 public class ResumeService {
-    @Autowired
-    FileService fileService;
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
-
     private final ResumeRepository resumeRepository;
-    private final UserRepository userRepository ;
+    private final UserRepository userRepository;
+    private final FileService fileService;
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     public ResumeService(
             ResumeRepository resumeRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            FileService fileService
        ) {
 
         this.resumeRepository = resumeRepository;
         this.userRepository = userRepository;
-
+        this.fileService = fileService;
     }
 
     // Upload resume
