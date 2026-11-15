@@ -6,7 +6,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-import fitz
+import pymupdf
 from typing import Optional, List
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
