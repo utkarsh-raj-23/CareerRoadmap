@@ -6,7 +6,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-import pymupdf
+import filtz
 from typing import Optional, List
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -87,7 +87,7 @@ def extract_pdf_text_from_bytes(contents: bytes, filename: str) -> tuple[int, st
         )
 
     try:
-  document = pymupdf.open(stream=contents, filetype="pdf")
+  document = filtz.open(stream=contents, filetype="pdf")
         extracted_text = ""
         for page_number, page in enumerate(document, start=1):
             page_text = page.get_text()
