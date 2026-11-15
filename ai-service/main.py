@@ -87,7 +87,7 @@ def extract_pdf_text_from_bytes(contents: bytes, filename: str) -> tuple[int, st
         )
 
     try:
-  document = filtz.open(stream=contents, filetype="pdf")
+        document = filtz.open(stream=contents, filetype="pdf")
         extracted_text = ""
         for page_number, page in enumerate(document, start=1):
             page_text = page.get_text()
