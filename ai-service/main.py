@@ -27,9 +27,12 @@ from gemini_service import (
 load_dotenv()
 
 app = FastAPI(
-    title="CareerRoadmap AI Microservice",
+    title="Career Assistance AI Service",
     description="Intelligent AI service powered by Google Gemini for resume parsing, deep resume review, personalized roadmap recommendation, and semantic skill analysis.",
-    version="2.0.0"
+    version="2.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
 )
 
 # Enable CORS for development & direct frontend access

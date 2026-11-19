@@ -1,40 +1,128 @@
-# 🎯 CareerRoadmap — Complete API Specification & Request Body Guide
+# 🚀 AI Career Assistance — Full Stack Intelligent Career Platform
 
-This document contains the exact **Request Body (JSON / Multipart)**, **Query Parameters**, **Path Variables**, and **Headers** required for every single endpoint in the **Spring Boot Backend (Port 10000)** and the **Python FastAPI AI Service (Port 8000)**.
-
----
-
-## 📋 Table of Contents
-
-- [Authentication & Headers](#-authentication--headers)
-- [Part 1: Spring Boot Backend APIs (Port 10000)](#part-1-spring-boot-backend-apis-port-10000)
-  - [1. Authentication (`/api/auth`)](#1-authentication-apiauth)
-  - [2. Student Profile (`/api/profile`)](#2-student-profile-apiprofile)
-  - [3. Student Skills (`/api/skills`)](#3-student-skills-apiskills)
-  - [4. Resume Management (`/api/resumes`)](#4-resume-management-apiresumes)
-  - [5. AI Resume Review, ATS & Skill Parsing (`/api/resumes`)](#5-ai-resume-review-ats--skill-parsing-apiresumes)
-  - [6. Career Management (`/api/careers`)](#6-career-management-apicareers)
-  - [7. Career Recommendations & Semantic Gap Analysis (`/api/recommendations`)](#7-career-recommendations--semantic-gap-analysis-apirecommendations)
-  - [8. Roadmaps & AI Generation (`/api/roadmaps`)](#8-roadmaps--ai-generation-apiroadmaps)
-  - [9. Assessments & Quizzes (`/api/assessments`)](#9-assessments--quizzes-apiassessments)
-  - [10. Learning Resources (`/api/resources`)](#10-learning-resources-apiresources)
-  - [11. Progress Tracking (`/api/progress`)](#11-progress-tracking-apiprogress)
-  - [12. Admin Dashboard (`/api/admin`)](#12-admin-dashboard-apiadmin)
-- [Part 2: Python FastAPI AI Service APIs (Port 8000)](#part-2-python-fastapi-ai-service-apis-port-8000)
-  - [1. System & Health](#1-system--health)
-  - [2. Text Extraction & Skill Parsing](#2-text-extraction--skill-parsing)
-  - [3. AI Resume Review & ATS Scoring](#3-ai-resume-review--ats-scoring)
-  - [4. Dynamic Roadmap Recommendation](#4-dynamic-roadmap-recommendation)
-  - [5. Semantic Skill Analysis](#5-semantic-skill-analysis)
+AI Career Assistance is an enterprise-grade career planning, resume intelligence, and skills acceleration system. It couples a **Spring Boot 4 (Java 21)** microservice backend, an asynchronous **Python FastAPI AI Microservice** powered by **Google Gemini (`gemini-3.8-flash`)**, and a modern **React 19 + Tailwind CSS** dark-themed frontend.
 
 ---
 
-## 🔑 Authentication & Headers
+## 🏗️ System Architecture
 
-- Public endpoints need no headers.
-- Authenticated endpoints accept:
+```text
+[ React 19 Frontend ]
+      │
+      │ HTTP / REST & Secure Cookies (career_jwt)
+      ▼
+[ Spring Boot 4 Backend (Port 10000) ] ────► [ PostgreSQL Database ]
+      │                                ────► [ Cloudinary Storage (Resumes) ]
+      │
+      │ RestClient (HTTP REST)
+      ▼
+[ Python FastAPI AI Microservice (Port 8000) ]
+      │
+      ├────► [ Google Gemini 3.8 Flash API ] (Primary Engine with 15s Timeout)
+      │
+      └────► [ High-Fidelity Heuristic Fallback Engine ] (Zero-Downtime Fallback)
+```
+
+### Key Technical Capabilities
+1. **AI Resume Review & ATS Scoring**: Evaluates candidate resumes against target roles, generating a 0–100 ATS score, strengths, critical formatting/keyword gaps, and bullet-point optimizations.
+2. **Dynamic 12-Week AI Roadmap Recommendation**: Produces phased, actionable milestone roadmaps with estimated completion timelines, curated learning topics, and capstone projects.
+3. **Deep Semantic Skill Gap Analysis**: Uses semantic embeddings and domain taxonomies to identify required skills, mark current proficiencies, and flag missing critical competencies.
+4. **Interactive Multi-Role Skill Assessments**:
+   - **Fresher Role (Core CS)**: 15 questions across OOP, Data Structures & Algorithms, Operating Systems, Computer Networks, and DBMS.
+   - **Cloud & DevOps Role**: 15 questions covering Docker, Kubernetes, AWS Cloud Architecture, Terraform (IaC), CI/CD, and Observability.
+   - **AI & ML Role**: 15 questions covering Supervised/Unsupervised ML, Deep Learning, NLP Transformers, LoRA, and MLOps.
+   - **Cybersecurity Role**: 15 questions covering CIA Triad, OWASP Top 10, Modern Cryptography, Zero Trust, and Incident Response.
+   - **Difficulty Tagging**: Questions categorized as `EASY`, `MEDIUM`, or `HARD`.
+   - **Post-Submission Analytics**: Total marks, performance percentage, difficulty-wise breakdown (`Easy X/Y`, `Med X/Y`, `Hard X/Y`), topic-wise breakdown, and detailed question review with explanations.
+
+---
+
+## 🛠️ Tech Stack & Directory Structure
+
+- **Backend (`/backend/careerroadmap`)**: Spring Boot 4.1.2, Java 21, Spring Data JPA, Spring Security (JWT via cookie `career_jwt` or `Bearer`), PostgreSQL, Cloudinary HTTP5 SDK, Lombok.
+- **AI Microservice (`/ai-service`)**: Python 3.12, FastAPI, Uvicorn, Google GenAI SDK (`google-genai>=3.0.0`), PyMuPDF (`fitz`), Python-Dotenv.
+- **Frontend (`/Software Project Frontend/my-app`)**: React 19, Vite 8, Tailwind CSS 4, React Router 7, Lucide React, React Hot Toast.
+
+---
+
+## ⚙️ Environment Configuration
+
+### Spring Boot Backend (`.env` or `application.properties`)
+```properties
+# Server
+server.port=10000
+spring.application.name=Career Assistance
+
+# PostgreSQL Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/Student
+spring.datasource.username=postgres
+spring.datasource.password=your_db_password
+
+# JWT
+jwt.secret=HbfIjU2f/1l8BVUc/WxVMqUAik3fSKp3jEzx5GlDTUs=
+jwt.expiration=86400000
+jwt.cookie-name=career_jwt
+JWT_COOKIE_SECURE=false
+JWT_COOKIE_SAME_SITE=Lax
+
+# Cloudinary Storage
+cloudinary.cloud.name=your_cloud_name
+cloudinary.api.key=your_cloudinary_key
+cloudinary.api.secret=your_cloudinary_secret
+
+# AI Service Microservice Link
+ai.service.url=http://localhost:8000
+```
+
+### Python AI Microservice (`.env`)
+```env
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_CHAT_MODEL=gemini-3.8-flash
+GEMINI_TIMEOUT_SECONDS=15
+PORT=8000
+```
+
+---
+
+## 🚀 How to Run the Project
+
+### 1. Start Python AI Microservice
+```bash
+cd "d:\5th Semester\Software Engineering\CareerRoadmap\ai-service"
+# Activate virtual environment
+.\.venv\Scripts\activate
+# Start FastAPI server
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+*Health Check:* `http://localhost:8000/health`
+
+### 2. Start Spring Boot Backend
+```bash
+cd "d:\5th Semester\Software Engineering\CareerRoadmap\backend\careerroadmap"
+# Compile and run
+.\mvnw.cmd spring-boot:run
+```
+*Running at:* `http://localhost:10000`
+
+### 3. Start React Frontend
+```bash
+cd "d:\5th Semester\Software Engineering\Software Project Frontend\my-app"
+# Install dependencies & run development server
+npm install
+npm run dev
+```
+*Running at:* `http://localhost:5173` (or `5174`)
+
+---
+
+# 📖 Complete API Specification & Request Body Reference
+
+## 🔐 Authentication & Headers
+
+- **Public Endpoints**: No authentication required.
+- **Protected Endpoints**:
   - Header: `Authorization: Bearer <jwt_token>`
-  - **OR** Cookie: `career_jwt=<jwt_token>` (automatically set upon login)
+  - **OR** Cookie: `career_jwt=<jwt_token>` (set automatically on login)
 
 ---
 
@@ -83,11 +171,11 @@ This document contains the exact **Request Body (JSON / Multipart)**, **Query Pa
 
 #### `POST /api/auth/logout`
 - **Auth:** 🔒 Authenticated
-- **Request Body:** None (Clears `career_jwt` cookie)
+- **Request Body:** None (Clears HTTP-only `career_jwt` cookie)
 
 #### `GET /api/auth/me`
 - **Auth:** 🔒 Authenticated
-- **Request Body:** None
+- **Request Body:** None (Returns current logged-in user profile & role)
 
 ---
 
@@ -131,7 +219,7 @@ This document contains the exact **Request Body (JSON / Multipart)**, **Query Pa
 
 #### `GET /api/skills/me`
 - **Auth:** 🔒 Authenticated
-- **Request Body:** None
+- **Request Body:** None (Fetches all skills declared by the student)
 
 #### `POST /api/skills/me`
 - **Auth:** 🔒 Authenticated
@@ -170,12 +258,12 @@ This document contains the exact **Request Body (JSON / Multipart)**, **Query Pa
 #### `POST /api/resumes/upload`
 - **Auth:** 🔒 Authenticated
 - **Content-Type:** `multipart/form-data`
-- **Form Data (Body):**
+- **Form Data:**
   - `file`: `<resume.pdf>` (Binary PDF file, max 5 MB)
 
 #### `GET /api/resumes`
 - **Auth:** 🔒 Authenticated
-- **Request Body:** None
+- **Request Body:** None (Returns metadata and Cloudinary URL of uploaded resumes)
 
 #### `GET /api/resumes/download`
 - **Auth:** 🔒 Authenticated
@@ -189,8 +277,8 @@ GET /api/resumes/download?fileUrl=https://res.cloudinary.com/zsypxb04/raw/upload
 #### `PUT /api/resumes/latest/update`
 - **Auth:** 🔒 Authenticated
 - **Content-Type:** `multipart/form-data`
-- **Form Data (Body):**
-  - `file`: `<new_resume.pdf>` (Replaces latest uploaded PDF)
+- **Form Data:**
+  - `file`: `<new_resume.pdf>` (Replaces the latest uploaded PDF on Cloudinary)
 
 ---
 
@@ -198,18 +286,17 @@ GET /api/resumes/download?fileUrl=https://res.cloudinary.com/zsypxb04/raw/upload
 
 #### `POST /api/resumes/{id}/analyze`
 - **Auth:** 🔒 Authenticated
-- **Path Variable:** `id` (Resume ID, e.g. `1`)
-- **Request Body:** None
-- **Action:** Streams PDF to Python AI service, extracts technical skills across 7 categories, and automatically saves them to the student's skill profile.
+- **Path Variable:** `id` (Long, Resume ID)
+- **Request Body:** None (Parses skills from PDF and auto-syncs with user profile)
 
 #### `POST /api/resumes/{id}/review`
 - **Auth:** 🔒 Authenticated
-- **Path Variable:** `id` (Resume ID, e.g. `1`)
-- **Query Parameter (Optional):** `targetCareer` (String)
+- **Path Variable:** `id` (Long, Resume ID)
+- **Query Parameter (Optional):** `targetCareer` (String, e.g. `Backend Developer`)
 - **Request Body:** None
 - **Example:**
 ```http
-POST /api/resumes/1/review?targetCareer=Backend Developer
+POST /api/resumes/1/review?targetCareer=Backend+Developer
 ```
 
 #### `POST /api/resumes/review-text`
@@ -218,20 +305,16 @@ POST /api/resumes/1/review?targetCareer=Backend Developer
 - **Request Body:**
 ```json
 {
-  "resume_text": "Prakhar Kumar\nEmail: prakhar@example.com\nSkills: Java, Spring Boot, Docker, PostgreSQL\nExperience: Designed REST APIs handling 50k requests/min. Reduced query latency by 45%...",
+  "resume_text": "Prakhar Kumar\nEmail: prakhar@example.com\nSkills: Java, Spring Boot, PostgreSQL, Docker, Git\nProjects: CareerRoadmap with full JWT auth and microservices.",
   "target_career": "Backend Developer"
 }
 ```
 
 #### `POST /api/resumes/{id}/skill-analysis`
 - **Auth:** 🔒 Authenticated
-- **Path Variable:** `id` (Resume ID, e.g. `1`)
-- **Query Parameter (Optional):** `targetCareer` (String)
-- **Request Body:** None
-- **Example:**
-```http
-POST /api/resumes/1/skill-analysis?targetCareer=Backend Developer
-```
+- **Path Variable:** `id` (Long, Resume ID)
+- **Query Parameter (Optional):** `targetCareer` (String, e.g. `Backend Developer`)
+- **Request Body:** None (Performs semantic skill gap analysis on the resume)
 
 ---
 
@@ -243,9 +326,9 @@ POST /api/resumes/1/skill-analysis?targetCareer=Backend Developer
 - **Request Body:**
 ```json
 {
-  "name": "Backend Developer",
-  "category": "Software Engineering",
-  "description": "Builds and maintains core application logic, database schemas, and microservice APIs."
+  "title": "Backend Developer",
+  "description": "Designs, implements, and maintains server-side web applications and microservices.",
+  "requiredSkills": ["Java", "Spring Boot", "PostgreSQL", "Docker", "REST APIs"]
 }
 ```
 
@@ -255,25 +338,7 @@ POST /api/resumes/1/skill-analysis?targetCareer=Backend Developer
 
 #### `GET /api/careers/{id}`
 - **Auth:** 🔒 Authenticated
-- **Path Variable:** `id` (Long, e.g. `1`)
-- **Request Body:** None
-
-#### `POST /api/careers/{careerId}/skills`
-- **Auth:** 🛡️ Admin Only
-- **Path Variable:** `careerId` (Long, e.g. `1`)
-- **Content-Type:** `application/json`
-- **Request Body:**
-```json
-{
-  "skillName": "Spring Boot",
-  "requiredLevel": "INTERMEDIATE",
-  "mandatory": true
-}
-```
-
-#### `DELETE /api/careers/{careerId}/skills/{skillId}`
-- **Auth:** 🛡️ Admin Only
-- **Path Variables:** `careerId` (Long), `skillId` (Long)
+- **Path Variable:** `id` (Long, Career ID)
 - **Request Body:** None
 
 ---
@@ -282,20 +347,17 @@ POST /api/resumes/1/skill-analysis?targetCareer=Backend Developer
 
 #### `GET /api/recommendations/careers`
 - **Auth:** 🔒 Authenticated
-- **Request Body:** None
-- **Returns:** Ranked list of careers based on the student's current skills.
+- **Request Body:** None (Matches user's declared profile skills against all careers)
 
-#### `GET /api/recommendations/careers/{careerId}/skill-gaps`
+#### `GET /api/recommendations/careers/{careerId}/gaps`
 - **Auth:** 🔒 Authenticated
 - **Path Variable:** `careerId` (Long, e.g. `1`)
-- **Request Body:** None
-- **Returns:** Exact string match percentage and list of missing skills.
+- **Request Body:** None (Rule-based exact keyword skill gap report)
 
 #### `GET /api/recommendations/careers/{careerId}/semantic-analysis`
 - **Auth:** 🔒 Authenticated
 - **Path Variable:** `careerId` (Long, e.g. `1`)
-- **Request Body:** None
-- **Returns:** **AI-driven deep semantic analysis** via Gemini 3.8 Flash, including category synergies, estimated proficiency, critical vs optional gaps, and prioritized next skills.
+- **Request Body:** None (Deep Gemini semantic skill analysis and categorized gap breakdown)
 
 ---
 
@@ -446,23 +508,36 @@ POST /api/roadmaps/ai-recommend?careerId=1&experienceLevel=Beginner&durationWeek
 - **Request Body:**
 ```json
 {
-  "title": "Spring Boot 3 Deep Dive",
-  "url": "https://example.com/courses/spring-boot",
-  "type": "VIDEO",
   "skillId": 1,
+  "title": "Spring Boot 3 Deep Dive",
+  "description": "Complete masterclass covering REST APIs, JPA, and Spring Security.",
+  "url": "https://example.com/courses/spring-boot",
+  "provider": "Coursera",
+  "resourceType": "VIDEO",
   "free": true
 }
 ```
-> Note: `type` can be `VIDEO`, `ARTICLE`, or `COURSE`.
+> Note: `resourceType` can be `VIDEO`, `ARTICLE`, or `COURSE`.
 
 #### `GET /api/resources`
 - **Auth:** 🔒 Authenticated
+- **Request Body:** None (Returns all curated resources)
+
+#### `GET /api/resources/search`
+- **Auth:** 🔒 Authenticated
+- **Query Parameters:**
+  - `title`: `Spring Boot` (String, Required — case-insensitive partial match)
+  - `freeOnly`: `false` (Boolean, Optional, default `false`)
 - **Request Body:** None
+- **Example:**
+```http
+GET /api/resources/search?title=Spring+Boot&freeOnly=true
+```
 
 #### `GET /api/resources/skill/{skillId}`
 - **Auth:** 🔒 Authenticated
 - **Path Variable:** `skillId` (Long, e.g. `1`)
-- **Query Parameter (Optional):** `freeOnly` (boolean, default `false`)
+- **Query Parameter (Optional):** `freeOnly` (Boolean, default `false`)
 - **Request Body:** None
 - **Example:**
 ```http
@@ -488,7 +563,7 @@ GET /api/resources/skill/1?freeOnly=true
 
 #### `GET /api/admin/dashboard`
 - **Auth:** 🛡️ Admin Only
-- **Request Body:** None
+- **Request Body:** None (Aggregated counts of students, skills, roadmaps, and submissions)
 
 ---
 
@@ -502,9 +577,26 @@ GET /api/resources/skill/1?freeOnly=true
 
 #### `GET /`
 - **Request Body:** None
+- **Response:**
+```json
+{
+  "service": "Career Assistance AI Service",
+  "version": "2.0.0",
+  "status": "operational",
+  "model": "gemini-3.8-flash"
+}
+```
 
 #### `GET /health`
 - **Request Body:** None
+- **Response:**
+```json
+{
+  "status": "healthy",
+  "gemini_configured": true,
+  "model": "gemini-3.8-flash"
+}
+```
 
 ---
 
@@ -514,6 +606,14 @@ GET /api/resources/skill/1?freeOnly=true
 - **Content-Type:** `multipart/form-data`
 - **Form Data:**
   - `file`: `<resume.pdf>` (Binary PDF file)
+- **Response:**
+```json
+{
+  "filename": "resume.pdf",
+  "total_pages": 1,
+  "extracted_text": "Experienced software engineer with expertise in Java, Spring Boot, PostgreSQL..."
+}
+```
 
 #### `POST /extract-skills`
 - **Content-Type:** `application/json`
@@ -523,11 +623,27 @@ GET /api/resources/skill/1?freeOnly=true
   "extracted_text": "Experienced software engineer with expertise in Java, Spring Boot, PostgreSQL, Docker, and AWS microservices."
 }
 ```
+- **Response:**
+```json
+{
+  "found_skills": ["Java", "Spring Boot", "PostgreSQL", "Docker", "AWS"],
+  "total_skills_found": 5
+}
+```
 
 #### `POST /analyze-resume`
 - **Content-Type:** `multipart/form-data`
 - **Form Data:**
   - `file`: `<resume.pdf>` (Binary PDF file)
+- **Response:**
+```json
+{
+  "filename": "resume.pdf",
+  "total_pages": 1,
+  "extracted_text": "...",
+  "found_skills": ["Java", "Spring Boot", "Docker", "PostgreSQL"]
+}
+```
 
 ---
 
@@ -538,8 +654,29 @@ GET /api/resources/skill/1?freeOnly=true
 - **Request Body:**
 ```json
 {
-  "resume_text": "Prakhar Kumar\nEmail: prakhar@example.com | LinkedIn: linkedin.com/in/prakhar\nSkills: Java, Spring Boot, Docker, PostgreSQL, REST APIs\nExperience: Software Engineer Intern at ABC Tech (2025).\n- Architected high-throughput REST API using Spring Boot, reducing latency by 40%.\n- Deployed containerized microservices to AWS ECS.\nProjects: CareerRoadmap System with full JWT auth and PostgreSQL.",
+  "resume_text": "Prakhar Kumar\nEmail: prakhar@example.com | LinkedIn: linkedin.com/in/prakhar\nSkills: Java, Spring Boot, Docker, PostgreSQL, REST APIs\nExperience: Software Engineer Intern at ABC Tech (2025).\n- Architected high-throughput REST API using Spring Boot, reducing latency by 40%.\n- Deployed containerized microservices to AWS ECS.\nProjects: AI Career Assistance with full JWT auth and PostgreSQL.",
   "target_career": "Backend Developer"
+}
+```
+- **Response:**
+```json
+{
+  "ats_score": 88,
+  "target_career": "Backend Developer",
+  "summary": "Strong backend candidate with practical Spring Boot and Docker exposure.",
+  "strengths": [
+    "Clear quantifiable metrics in work experience (-40% latency)",
+    "Strong core Java and microservices tech stack"
+  ],
+  "areas_for_improvement": [
+    "Add automated testing keywords (JUnit, Mockito, Testcontainers)",
+    "Mention CI/CD pipeline implementation details"
+  ],
+  "extracted_skills": ["Java", "Spring Boot", "Docker", "PostgreSQL", "REST APIs"],
+  "recommended_keywords": ["JUnit", "Mockito", "Kubernetes", "Kafka", "CI/CD"],
+  "formatting_score": 90,
+  "keyword_score": 85,
+  "model_used": "gemini-3.8-flash"
 }
 ```
 
@@ -567,6 +704,49 @@ GET /api/resources/skill/1?freeOnly=true
   "duration_weeks": 12
 }
 ```
+- **Response:**
+```json
+{
+  "target_career": "Backend Developer",
+  "experience_level": "Beginner",
+  "duration_weeks": 12,
+  "overview": "Comprehensive 12-week roadmap tailored for aspiring Backend Developers.",
+  "phases": [
+    {
+      "phase_number": 1,
+      "title": "Java Core & OOP Mastery",
+      "duration_weeks": 3,
+      "description": "Deep dive into OOP, Collections, Concurrency, and Stream API.",
+      "milestones": [
+        {
+          "title": "OOP & Multithreading",
+          "topics": ["Encapsulation", "Polymorphism", "Generics", "Executors"],
+          "estimated_hours": 20
+        }
+      ]
+    },
+    {
+      "phase_number": 2,
+      "title": "Spring Boot & Relational Databases",
+      "duration_weeks": 4,
+      "description": "Build production REST APIs with Spring Data JPA and PostgreSQL.",
+      "milestones": [
+        {
+          "title": "RESTful Architecture & Validation",
+          "topics": ["Spring MVC", "DTOs", "JPA Relations", "Flyway"],
+          "estimated_hours": 30
+        }
+      ]
+    }
+  ],
+  "capstone_project": {
+    "title": "Scalable Multi-Tenant E-Commerce API",
+    "description": "Architect a production-ready microservice with JWT auth, Redis caching, and Stripe payments.",
+    "tech_stack": ["Java 21", "Spring Boot 4", "PostgreSQL", "Redis", "Docker"]
+  },
+  "model_used": "gemini-3.8-flash"
+}
+```
 
 ---
 
@@ -574,7 +754,7 @@ GET /api/resources/skill/1?freeOnly=true
 
 #### `POST /skill-analysis`
 - **Content-Type:** `application/json`
-- **Request Body (Format A - Explicit skills list):**
+- **Request Body (Format A — Explicit skills list):**
 ```json
 {
   "skills": [
@@ -585,11 +765,54 @@ GET /api/resources/skill/1?freeOnly=true
   "target_career": "Backend Developer"
 }
 ```
-- **Request Body (Format B - Raw profile text):**
+- **Request Body (Format B — Raw profile text):**
 ```json
 {
   "text": "Full stack enthusiast with 2 years of experience in React, TypeScript, Node.js, and MongoDB.",
   "target_career": "Full Stack Developer"
+}
+```
+- **Response:**
+```json
+{
+  "target_career": "Backend Developer",
+  "candidate_skills": [
+    {
+      "name": "Java",
+      "proficiency": "INTERMEDIATE",
+      "domain": "Languages"
+    },
+    {
+      "name": "PostgreSQL",
+      "proficiency": "INTERMEDIATE",
+      "domain": "Databases"
+    },
+    {
+      "name": "Docker",
+      "proficiency": "BEGINNER",
+      "domain": "Cloud & DevOps"
+    }
+  ],
+  "missing_critical_skills": [
+    {
+      "name": "Spring Boot",
+      "importance": "CRITICAL",
+      "reason": "De-facto enterprise framework for Java backend systems."
+    },
+    {
+      "name": "Distributed Caching (Redis)",
+      "importance": "HIGH",
+      "reason": "Crucial for high-throughput session and query caching."
+    }
+  ],
+  "skill_domains": {
+    "Languages": ["Java"],
+    "Databases": ["PostgreSQL"],
+    "Cloud & DevOps": ["Docker"]
+  },
+  "overall_readiness_percentage": 68,
+  "executive_summary": "Solid programming foundation with good relational database awareness. High priority gap is enterprise framework mastery (Spring Boot).",
+  "model_used": "gemini-3.8-flash"
 }
 ```
 
@@ -598,3 +821,22 @@ GET /api/resources/skill/1?freeOnly=true
 - **Form Data:**
   - `file`: `<resume.pdf>` (Binary PDF file, Required)
   - `target_career`: `Backend Developer` (Text string, Optional)
+
+---
+
+## 🎯 Frontend Routes & Features Summary
+
+| Route | Page | Purpose | Access |
+|---|---|---|---|
+| `/home` | Home Page | Landing page showcasing AI philosophy, feature tabs, and platform capabilities. | 🌐 Public |
+| `/login` | Login Page | Secure JWT authentication entry point. | 🌐 Public |
+| `/register` | Register Page | Student account onboarding. | 🌐 Public |
+| `/profile` | Career Profile | Student command center: AI Roadmaps, ATS Resume Review, Semantic Gap Analysis, My Technical Stack, and Skill Assessments. | 🔒 Protected |
+| `/dashboard` | Redirect | Automatically redirects to `/profile`. | 🔒 Protected |
+
+### Built-in 60-Question Skill Assessments
+Available directly in the **Skill Assessments** tab with difficulty tags (`EASY`, `MEDIUM`, `HARD`) and comprehensive score analysis:
+1. **Fresher Role (Core CS)**: 15 questions covering OOP, DSA, OS, CN, and DBMS.
+2. **Cloud & DevOps Role**: 15 questions covering Docker, Kubernetes, AWS, Terraform, CI/CD, and Observability.
+3. **AI & ML Role**: 15 questions covering Machine Learning, Deep Learning, NLP Transformers, and MLOps.
+4. **Cybersecurity Role**: 15 questions covering CIA Triad, OWASP Top 10, Modern Cryptography, and Zero Trust Architecture.
