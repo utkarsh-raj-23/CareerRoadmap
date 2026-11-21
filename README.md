@@ -165,7 +165,7 @@ npm run dev
 {
   "fullName": "System Admin",
   "email": "admin@example.com",
-  "password": "AdminPassword123"
+  "password": "AdminPassword123!"
 }
 ```
 
